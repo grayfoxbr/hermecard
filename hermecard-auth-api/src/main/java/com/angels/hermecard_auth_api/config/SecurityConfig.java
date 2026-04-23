@@ -7,6 +7,7 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jose.jwk.RSAKey;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -17,7 +18,6 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,15 +31,15 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
-import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -52,11 +52,16 @@ import java.util.UUID;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Value("${jwt.secret}")
+    private static String keyId;
+
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
                 new OAuth2AuthorizationServerConfigurer();
+
+        Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
         http
 
@@ -71,24 +76,54 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(authorizationServerConfigurer.getEndpointsMatcher())
                 )
                 .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(
-                                (request, response, authException) -> {
-                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                                    response.setContentType("application/json");
-                                    response.getWriter().write("{\"error\": \"unauthorized\"}");
-                                }
-                        )
+
+                        // 🔐 401 - não autenticado
+                        .authenticationEntryPoint((request, response, ex) -> {
+                            log.error("❌ AUTH ERROR: {}", ex.getMessage(), ex);
+
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+
+                            response.getWriter().write("""
+                        {
+                          "error": "unauthorized",
+                          "message": "%s",
+                          "path": "%s"
+                        }
+                        """.formatted(ex.getMessage(), request.getRequestURI()));
+                        })
+
+                        // 🔒 403 - acesso negado
+                        .accessDeniedHandler((request, response, ex) -> {
+                            log.error("⛔ ACCESS DENIED: {}", ex.getMessage(), ex);
+
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json");
+
+                            response.getWriter().write("""
+                        {
+                          "error": "forbidden",
+                          "message": "%s",
+                          "path": "%s"
+                        }
+                        """.formatted(ex.getMessage(), request.getRequestURI()));
+                        })
                 );
 
         return http.build();
     }
 
     @Bean
-    @Order(3)
+    @Order(2)
     public SecurityFilterChain appSecurity(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-                .formLogin(Customizer.withDefaults());
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/main.css", "/callback").permitAll()
+                        .anyRequest().authenticated())
+                        .formLogin(form -> form
+                                .loginPage("/login")
+                                .permitAll());
+                //.formLogin(Customizer.withDefaults());
 
         return http.build();
     }
@@ -107,7 +142,7 @@ public class SecurityConfig {
 
         return new RSAKey.Builder(publicKey)
                 .privateKey(privateKey)
-                .keyID(UUID.randomUUID().toString())
+                .keyID(keyId)
                 .build();
     }
 
@@ -134,7 +169,7 @@ public class SecurityConfig {
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 
-                .redirectUri("http://localhost:8080/callback")
+                .redirectUri("https://oauth.pstmn.io/v1/callback")
 
                 .scope(OidcScopes.OPENID)
                 .scope("read")
@@ -188,7 +223,7 @@ public class SecurityConfig {
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder()
-                .issuer("http://localhost:8081")
+                .issuer("http://localhost:8080")
                 .build();
     }
 
