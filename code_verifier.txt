@@ -1,0 +1,3 @@
+powershell -command "$bytes = New-Object byte[] 32; (New-Object Security.Cryptography.RNGCryptoServiceProvider).GetBytes($bytes); $verifier = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_'); Write-Host 'code_verifier:' $verifier"
+
+code_verifier: G-HwDF81VGDMFgQtGPNjyMCkm_x5kBqM_06OI-GgCcE

@@ -1,0 +1,3 @@
+powershell -command "$verifier = 'SEU_VERIFIER'; $bytes = [System.Text.Encoding]::ASCII.GetBytes($verifier); $hash = [System.Security.Cryptography.SHA256]::Create().ComputeHash($bytes); $challenge = [Convert]::ToBase64String($hash).TrimEnd('=').Replace('+','-').Replace('/','_'); Write-Host 'code_challenge:' $challenge"
+
+code_challenge: I3s_n_tiq5VsjVzh0L9hdMrwWY_HAnEqueb5s6926F0

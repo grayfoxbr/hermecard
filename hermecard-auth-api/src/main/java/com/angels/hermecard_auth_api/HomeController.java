@@ -8,24 +8,21 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class HomeController {
 
-//    @GetMapping("/")
-//    public String home() {
-//
-//        return "index";
-//
-//    }
+    // ✅ Descomentado: rota raiz agora funciona
+    @GetMapping("/")
+    public String home() {
+        return "index";
+    }
 
     @GetMapping("/login")
     public String login() {
-
         return "login";
-
     }
 
+    // ✅ Callback para receber o código de autorização OAuth2
     @GetMapping("/callback")
     @ResponseBody
     public String callback(@RequestParam String code) {
-        return "Authorization code: " + code;
+        return "Authorization code received: " + code;
     }
-
 }
