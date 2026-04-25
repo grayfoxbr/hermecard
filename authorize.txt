@@ -1,1 +1,1 @@
-http://localhost:8080/oauth2/authorize?response_type=code&client_id=mobile-app&redirect_uri=https%3A%2F%2Foauth.pstmn.io%2Fv1%2Fcallback&scope=openid%20read%20write&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256
+http://localhost:8080/oauth2/authorize?response_type=code&client_id=mobile-app&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fcallback&scope=openid%20read%20write%20offline_access&state=abc123&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM&code_challenge_method=S256
