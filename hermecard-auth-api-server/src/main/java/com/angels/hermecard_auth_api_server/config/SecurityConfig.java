@@ -4,11 +4,8 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.time.Duration;
 import java.util.UUID;
 
-import com.angels.hermecard_auth_api_server.repo.ClientRepository;
-import com.angels.hermecard_auth_api_server.repo.JpaRegisteredClientRepository;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -38,6 +35,10 @@ public class SecurityConfig {
 
     private static final String KEY_ID = UUID.randomUUID().toString();
 
+    /**
+     * Filter chain para os endpoints do Authorization Server (OAuth2/OIDC).
+     * Redireciona para /login quando não autenticado via browser.
+     */
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
@@ -47,17 +48,13 @@ public class SecurityConfig {
 
         http
                 .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-                .with(authorizationServerConfigurer, (authorizationServer) ->
-                        authorizationServer
-                                .oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0
+                .with(authorizationServerConfigurer, authorizationServer ->
+                        authorizationServer.oidc(Customizer.withDefaults())
                 )
-                .authorizeHttpRequests((authorize) ->
-                        authorize
-                                .anyRequest().authenticated()
+                .authorizeHttpRequests(authorize -> authorize
+                        .anyRequest().authenticated()
                 )
-                // Redirect to the login page when not authenticated from the
-                // authorization endpoint
-                .exceptionHandling((exceptions) -> exceptions
+                .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint("/login"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
@@ -67,17 +64,33 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Filter chain padrão para as demais rotas da aplicação.
+     *
+     * FIX: Liberamos /login e /login?* explicitamente para evitar redirect loop.
+     * FIX: Usamos formLogin com loginPage customizada apontando para o template Thymeleaf.
+     * FIX: Liberamos também / (home) e /callback para acesso direto.
+     */
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
             throws Exception {
         http
-                .authorizeHttpRequests((authorize) -> authorize
+                .authorizeHttpRequests(authorize -> authorize
+                        // Rotas públicas: página de login, assets CSS/JS e callback OAuth2
+                        .requestMatchers("/login", "/login/**", "/main.css", "/callback").permitAll()
+                        // Tudo mais exige autenticação
                         .anyRequest().authenticated()
                 )
-                // Form login handles the redirect to the login page from the
-                // authorization server filter chain
-                .formLogin(Customizer.withDefaults());
+                // FIX: Aponta para o formulário Thymeleaf customizado em /login
+                // em vez de usar o formulário padrão do Spring Security
+                .formLogin(form -> form
+                        .loginPage("/login")            // GET /login → login.html (Thymeleaf)
+                        .loginProcessingUrl("/login")   // POST /login → Spring Security processa
+                        .defaultSuccessUrl("/", true)   // Após login bem-sucedido vai para /
+                        .failureUrl("/login?error")     // Em caso de erro vai para /login?error
+                        .permitAll()
+                );
 
         return http.build();
     }
@@ -89,7 +102,6 @@ public class SecurityConfig {
         RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
         RSAKey rsaKey = new RSAKey.Builder(publicKey)
                 .privateKey(privateKey)
-                //.keyID(UUID.randomUUID().toString())
                 .keyID(KEY_ID)
                 .build();
         JWKSet jwkSet = new JWKSet(rsaKey);
@@ -102,8 +114,7 @@ public class SecurityConfig {
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
             keyPairGenerator.initialize(2048);
             keyPair = keyPairGenerator.generateKeyPair();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new IllegalStateException(ex);
         }
         return keyPair;
@@ -123,5 +134,4 @@ public class SecurityConfig {
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder().build();
     }
-
 }
