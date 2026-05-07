@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hermecard</string>
+    <string name="title_home">Início</string>
+    <string name="action_logout">Sair</string>
+    <string name="action_token_info">Info do Token</string>
+</resources>

@@ -1,0 +1,76 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.angels.hermecard'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.angels.hermecard"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        // Redirect URI scheme para o AppAuth capturar o callback OAuth2
+        manifestPlaceholders = [
+            'appAuthRedirectScheme': 'com.angels.hermecard'
+        ]
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            debuggable true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+}
+
+dependencies {
+    // AndroidX Core
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.activity:activity:1.8.2'
+
+    // AppAuth — biblioteca oficial para OAuth2/OIDC em Android
+    implementation 'net.openid:appauth:0.11.1'
+
+    // Retrofit + OkHttp para chamadas à Resource API
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+
+    // Gson
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Scalars converter para endpoints que retornam String pura
+    implementation 'com.squareup.retrofit2:converter-scalars:2.9.0'
+
+    // Browser para Custom Tabs (AppAuth usa isso para o login)
+    implementation 'androidx.browser:browser:1.7.0'
+
+    // Lifecycle / ViewModel
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.7.0'
+
+    // Security - SharedPreferences criptografado para guardar tokens
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+
+    // SwipeRefreshLayout
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+}
