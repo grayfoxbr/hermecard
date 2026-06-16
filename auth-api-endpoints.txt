@@ -1,0 +1,29 @@
+=== SPRING AUTHORIZATION SERVER ENDPOINTS ===
+
+# OAuth2 Core
+/oauth2/authorize
+/oauth2/token
+/oauth2/introspect
+/oauth2/revoke
+
+# JWK (chave pública)
+/oauth2/jwks
+
+# OpenID Connect (OIDC)
+ /.well-known/openid-configuration
+/userinfo
+/connect/logout
+
+# Possíveis (dependendo da configuração)
+/oauth2/device_authorization
+/oauth2/device_verification
+
+
+=== NÃO INCLUÍDOS NO MATCHER ===
+
+# Endpoints da aplicação
+/login
+/callback
+/error
+/main.css
+/api/*
