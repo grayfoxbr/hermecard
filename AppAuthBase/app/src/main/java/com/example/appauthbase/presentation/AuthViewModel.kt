@@ -3,6 +3,7 @@ package com.example.appauthbase.presentation
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import com.example.appauthbase.domain.usecase.CheckAuthStateUseCase
+import com.example.appauthbase.domain.usecase.GetLoginIntentUseCase
 import com.example.appauthbase.domain.usecase.HandleAuthResponseUseCase
 import com.example.appauthbase.domain.usecase.LogoutUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,88 +12,55 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class AuthViewModel(
 
-    private val check:
-    CheckAuthStateUseCase,
+    private val check: CheckAuthStateUseCase,
 
-    private val login:
-    HandleAuthResponseUseCase,
+    private val getLoginIntent: GetLoginIntentUseCase,
 
-    private val logoutUseCase:
-    LogoutUseCase
+    private val login: HandleAuthResponseUseCase,
+
+    private val logoutUseCase: LogoutUseCase
 
 ) : ViewModel() {
 
-    private val _ui =
-        MutableStateFlow(
-            AuthStateData()
-        )
+    private val _uiState = MutableStateFlow(AuthStateData())
 
-    val ui:
-            StateFlow<AuthStateData> =
-        _ui.asStateFlow()
+    /** Exposto como `uiState` — consumido por LoginScreen */
+    val uiState: StateFlow<AuthStateData> = _uiState.asStateFlow()
 
     init {
         refresh()
     }
 
     private fun refresh() {
-
-        val auth =
-            check()
-
-        _ui.value =
-
-            AuthStateData(
-
-                isLoggedIn =
-                    auth.loggedIn,
-
-                accessToken =
-                    auth.accessToken
-            )
+        val auth = check()
+        _uiState.value = AuthStateData(
+            isLoggedIn = auth.loggedIn,
+            accessToken = auth.accessToken
+        )
     }
 
-    fun handleIntent(
-        intent: Intent
-    ) {
+    fun loginIntent(): Intent = getLoginIntent()
 
-        _ui.value =
-            _ui.value.copy(
-                isLoading = true,
-                errorMessage = null
-            )
+    fun handleIntent(intent: Intent) {
+        _uiState.value = _uiState.value.copy(
+            isLoading = true,
+            errorMessage = null
+        )
 
-        login(
-            intent
-        ) { success, exception ->
-
+        login(intent) { success, exception ->
             if (success) {
-
                 refresh()
-
             } else {
-
-                _ui.value =
-
-                    _ui.value.copy(
-
-                        errorMessage =
-                            exception?.message
-                                ?: "Authentication failed"
-                    )
-            }
-
-            _ui.value =
-                _ui.value.copy(
-                    isLoading = false
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = exception?.message ?: "Falha na autenticação"
                 )
+            }
+            _uiState.value = _uiState.value.copy(isLoading = false)
         }
     }
 
     fun logout() {
-
         logoutUseCase()
-
         refresh()
     }
 }

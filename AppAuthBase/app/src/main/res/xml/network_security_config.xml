@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">localhost</domain>
-    </domain-config>
+    <!--
+        Permite tráfego HTTP (cleartext) para desenvolvimento local.
+        Em produção, use HTTPS e remova este bloco.
+
+        base-config com cleartextTrafficPermitted="true" libera HTTP para
+        todos os hosts — suficiente para desenvolvimento com IP local.
+        Restrinja ao mínimo necessário em produção.
+    -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
 </network-security-config>

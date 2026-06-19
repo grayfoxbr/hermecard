@@ -2,50 +2,21 @@ package com.example.appauthbase.presentation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-
+import com.example.appauthbase.data.remote.AuthApiProvider
 import com.example.appauthbase.data.repository.AuthRepositoryImpl
 
-class RegisterViewModelFactory :
+class RegisterViewModelFactory : ViewModelProvider.Factory {
 
-    ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
 
-    override fun <T : ViewModel> create(
+        if (modelClass.isAssignableFrom(RegisterViewModel::class.java)) {
 
-        modelClass:
-        Class<T>
+            val repository = AuthRepositoryImpl(AuthApiProvider.authApi)
 
-    ): T {
-
-        if (
-
-            modelClass.isAssignableFrom(
-
-                RegisterViewModel::class.java
-            )
-
-        ) {
-
-            val repository =
-
-                AuthRepositoryImpl(
-
-                    AuthApiProvider
-                        .authApi
-                )
-
-            @Suppress(
-                "UNCHECKED_CAST"
-            )
-
-            return RegisterViewModel(
-
-                repository
-
-            ) as T
+            @Suppress("UNCHECKED_CAST")
+            return RegisterViewModel(repository) as T
         }
 
-        throw IllegalArgumentException(
-            "Unknown ViewModel"
-        )
+        throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
     }
 }

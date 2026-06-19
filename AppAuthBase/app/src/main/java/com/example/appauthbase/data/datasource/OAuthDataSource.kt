@@ -3,6 +3,7 @@ package com.example.appauthbase.data.datasource
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import com.example.appauthbase.config.NetworkConfig
 import net.openid.appauth.*
 
 class OAuthDataSource(
@@ -15,162 +16,84 @@ class OAuthDataSource(
             Context.MODE_PRIVATE
         )
 
-    private var state =
-        readState()
+    private var state = readState()
 
     private val service =
         AuthorizationService(
             context,
-            AppAuthConfiguration.Builder()
-                .build()
+            AppAuthConfiguration.Builder().build()
         )
 
     private val config =
         AuthorizationServiceConfiguration(
-
-            Uri.parse(
-                "http://10.0.2.2:8080/oauth2/authorize"
-            ),
-
-            Uri.parse(
-                "http://10.0.2.2:8080/oauth2/token"
-            )
+            Uri.parse(NetworkConfig.AUTHORIZE_URL),
+            Uri.parse(NetworkConfig.TOKEN_URL)
         )
 
     fun buildIntent(): Intent {
 
         val request =
-
             AuthorizationRequest
                 .Builder(
-
                     config,
-
-                    "meu-client",
-
+                    NetworkConfig.CLIENT_ID,
                     ResponseTypeValues.CODE,
-
-                    Uri.parse(
-                        "com.example.appauthbase:/oauth2redirect"
-                    )
+                    Uri.parse(NetworkConfig.REDIRECT_URI)
                 )
-
-                .setScope(
-                    "openid profile email"
-                )
-
+                .setScope(NetworkConfig.SCOPES)
+                // PKCE é obrigatório pois o client usa requireProofKey(true)
                 .build()
 
-        return service
-            .getAuthorizationRequestIntent(
-                request
-            )
+        return service.getAuthorizationRequestIntent(request)
     }
 
-    fun authorized() =
-        state.isAuthorized
+    fun authorized() = state.isAuthorized
 
-    fun token() =
-        state.accessToken
+    fun token() = state.accessToken
 
     fun clear() {
-
-        state =
-            AuthState()
-
+        state = AuthState()
         save()
     }
 
     fun handleResult(
         intent: Intent,
-        callback:
-            (
-            Boolean,
-            Exception?
-        ) -> Unit
+        callback: (Boolean, Exception?) -> Unit
     ) {
 
         val response =
-            AuthorizationResponse
-                .fromIntent(
-                    intent
-                )
+            AuthorizationResponse.fromIntent(intent)
 
         val exception =
-            AuthorizationException
-                .fromIntent(
-                    intent
-                )
+            AuthorizationException.fromIntent(intent)
 
-        state.update(
-            response,
-            exception
-        )
-
+        state.update(response, exception)
         save()
 
         if (response == null) {
-
-            callback(
-                false,
-                exception
-            )
-
+            callback(false, exception)
             return
         }
 
         service.performTokenRequest(
-
-            response
-                .createTokenExchangeRequest()
-
+            response.createTokenExchangeRequest()
         ) { token, ex ->
-
-            state.update(
-                token,
-                ex
-            )
-
+            state.update(token, ex)
             save()
-
-            callback(
-                token != null,
-                ex
-            )
+            callback(token != null, ex)
         }
     }
 
     private fun save() {
-
         prefs.edit()
-
-            .putString(
-                "state",
-
-                state
-                    .jsonSerializeString()
-            )
-
+            .putString("state", state.jsonSerializeString())
             .apply()
     }
 
     private fun readState(): AuthState {
-
         return prefs
-
-            .getString(
-                "state",
-                null
-            )
-
-            ?.let {
-
-                AuthState
-                    .jsonDeserialize(
-                        it
-                    )
-            }
-
+            .getString("state", null)
+            ?.let { AuthState.jsonDeserialize(it) }
             ?: AuthState()
     }
 }
