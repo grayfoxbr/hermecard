@@ -12,56 +12,99 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.appauthbase.auth.AuthManager
-import com.example.appauthbase.auth.AuthViewModel
-import com.example.appauthbase.auth.AuthViewModelFactory
+
+import com.example.appauthbase.navigation.MainNavigation
+import com.example.appauthbase.presentation.AuthViewModel
+import com.example.appauthbase.presentation.AuthViewModelFactory
+import com.example.appauthbase.presentation.RegisterViewModel
+import com.example.appauthbase.presentation.RegisterViewModelFactory
 import com.example.appauthbase.theme.AppAuthBaseTheme
-import com.example.appauthbase.ui.LoginScreen
 
-class MainActivity : ComponentActivity() {
+class MainActivity :
+    ComponentActivity() {
 
-    private lateinit var authManager: AuthManager
-    private val authViewModel: AuthViewModel by viewModels {
-        AuthViewModelFactory(authManager)
+    private val authViewModel:
+            AuthViewModel by viewModels {
+
+        AuthViewModelFactory(
+            applicationContext
+        )
     }
 
-    private lateinit var loginLauncher: ActivityResultLauncher<Intent>
+    private val registerViewModel:
+            RegisterViewModel by viewModels {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        authManager = AuthManager(applicationContext)
+        RegisterViewModelFactory()
+    }
 
-        loginLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val data = result.data
-            if (data != null) {
-                authViewModel.handleAuthIntent(data)
+    private lateinit var loginLauncher:
+            ActivityResultLauncher<Intent>
+
+    override fun onCreate(
+        savedInstanceState:
+        Bundle?
+    ) {
+
+        super.onCreate(
+            savedInstanceState
+        )
+
+        loginLauncher =
+            registerForActivityResult(
+
+                ActivityResultContracts
+                    .StartActivityForResult()
+
+            ) { result ->
+
+                result.data
+                    ?.let {
+
+                        authViewModel
+                            .handleIntent(
+                                it
+                            )
+                    }
             }
-        }
 
         enableEdgeToEdge()
+
         setContent {
+
             AppAuthBaseTheme {
+
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+
+                    modifier =
+                        Modifier
+                            .fillMaxSize(),
+
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .background
+
                 ) {
-                    LoginScreen(
-                        authViewModel = authViewModel,
-                        onLoginClick = { startAuthFlow() }
+
+                    MainNavigation(
+
+                        authViewModel =
+                            authViewModel,
+
+                        registerViewModel =
+                            registerViewModel,
+
+                        onLoginClick = {
+
+                            loginLauncher.launch(
+
+                                authViewModel
+                                    .loginIntent()
+                            )
+                        }
                     )
                 }
             }
         }
-    }
-
-    private fun startAuthFlow() {
-        val authIntent = authManager.getAuthorizationRequestIntent()
-        loginLauncher.launch(authIntent)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        authManager.dispose()
     }
 }

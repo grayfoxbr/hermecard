@@ -1,4 +1,4 @@
-package com.example.appauthbase
+package com.example.appauthbase.navigation
 
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable

@@ -1,0 +1,176 @@
+package com.example.appauthbase.data.datasource
+
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import net.openid.appauth.*
+
+class OAuthDataSource(
+    context: Context
+) {
+
+    private val prefs =
+        context.getSharedPreferences(
+            "auth",
+            Context.MODE_PRIVATE
+        )
+
+    private var state =
+        readState()
+
+    private val service =
+        AuthorizationService(
+            context,
+            AppAuthConfiguration.Builder()
+                .build()
+        )
+
+    private val config =
+        AuthorizationServiceConfiguration(
+
+            Uri.parse(
+                "http://10.0.2.2:8080/oauth2/authorize"
+            ),
+
+            Uri.parse(
+                "http://10.0.2.2:8080/oauth2/token"
+            )
+        )
+
+    fun buildIntent(): Intent {
+
+        val request =
+
+            AuthorizationRequest
+                .Builder(
+
+                    config,
+
+                    "meu-client",
+
+                    ResponseTypeValues.CODE,
+
+                    Uri.parse(
+                        "com.example.appauthbase:/oauth2redirect"
+                    )
+                )
+
+                .setScope(
+                    "openid profile email"
+                )
+
+                .build()
+
+        return service
+            .getAuthorizationRequestIntent(
+                request
+            )
+    }
+
+    fun authorized() =
+        state.isAuthorized
+
+    fun token() =
+        state.accessToken
+
+    fun clear() {
+
+        state =
+            AuthState()
+
+        save()
+    }
+
+    fun handleResult(
+        intent: Intent,
+        callback:
+            (
+            Boolean,
+            Exception?
+        ) -> Unit
+    ) {
+
+        val response =
+            AuthorizationResponse
+                .fromIntent(
+                    intent
+                )
+
+        val exception =
+            AuthorizationException
+                .fromIntent(
+                    intent
+                )
+
+        state.update(
+            response,
+            exception
+        )
+
+        save()
+
+        if (response == null) {
+
+            callback(
+                false,
+                exception
+            )
+
+            return
+        }
+
+        service.performTokenRequest(
+
+            response
+                .createTokenExchangeRequest()
+
+        ) { token, ex ->
+
+            state.update(
+                token,
+                ex
+            )
+
+            save()
+
+            callback(
+                token != null,
+                ex
+            )
+        }
+    }
+
+    private fun save() {
+
+        prefs.edit()
+
+            .putString(
+                "state",
+
+                state
+                    .jsonSerializeString()
+            )
+
+            .apply()
+    }
+
+    private fun readState(): AuthState {
+
+        return prefs
+
+            .getString(
+                "state",
+                null
+            )
+
+            ?.let {
+
+                AuthState
+                    .jsonDeserialize(
+                        it
+                    )
+            }
+
+            ?: AuthState()
+    }
+}
