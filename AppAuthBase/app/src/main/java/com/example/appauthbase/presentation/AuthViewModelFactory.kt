@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.appauthbase.data.datasource.OAuthDataSource
-import com.example.appauthbase.data.repository.AuthRepositoryImpl
+import com.example.appauthbase.data.repository.OAuthRepositoryImpl
 import com.example.appauthbase.domain.usecase.CheckAuthStateUseCase
 import com.example.appauthbase.domain.usecase.GetLoginIntentUseCase
 import com.example.appauthbase.domain.usecase.HandleAuthResponseUseCase
@@ -19,7 +19,7 @@ class AuthViewModelFactory(
         if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
 
             val datasource = OAuthDataSource(context)
-            val repository = AuthRepositoryImpl(datasource) // ← OAuthRepositoryImpl, não AuthRepositoryImpl
+            val repository = OAuthRepositoryImpl(datasource)
 
             val checkAuth      = CheckAuthStateUseCase(repository)
             val getLoginIntent = GetLoginIntentUseCase(repository)

@@ -1,4 +1,4 @@
-package com.angels.hermecard_auth_api_server.controller;
+package com.angels.hermecard_auth_api_server;
 
 import com.angels.hermecard_auth_api_server.model.User;
 import com.angels.hermecard_auth_api_server.repo.UserRepository;

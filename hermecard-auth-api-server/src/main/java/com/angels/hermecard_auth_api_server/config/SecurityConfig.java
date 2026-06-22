@@ -45,13 +45,17 @@ public class SecurityConfig {
                 OAuth2AuthorizationServerConfigurer.authorizationServer();
 
         http
+                // CONFIGURANDO OS ENDPOINTS DO PADRÃO OAUTH2
                 .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+                // CONFIGURANDO PROTOCOLO OIDC
                 .with(authorizationServerConfigurer, authorizationServer ->
                         authorizationServer.oidc(Customizer.withDefaults())
                 )
+                // CONFIGURANDO AUTORIZAÇÃO BASICA
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().authenticated()
                 )
+                // CONFIGURANDO EXCEÇÕES
                 .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint("/login"),
