@@ -28,6 +28,11 @@ public class HomeController {
         return "login";
     }
 
+    @GetMapping("/failure")
+    public String failure() {
+        return "failure";
+    }
+
     /**
      * Callback para receber o código de autorização OAuth2 após o fluxo de autorização.
      */

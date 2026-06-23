@@ -72,7 +72,12 @@ public class SecurityConfig {
             throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login", "/login/**", "/main.css", "/callback").permitAll()
+                        .requestMatchers(
+                                "/login",
+                                "/login/**",
+                                "/failure",
+                                "/main.css",
+                                "/callback").permitAll()
                         // Endpoint de cadastro liberado para o app mobile
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
                         .anyRequest().authenticated()
@@ -80,8 +85,9 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/login?error")
+                        //.defaultSuccessUrl("/", true)
+                        //.failureUrl("/login?error")
+                        .failureUrl("/failure")
                         .permitAll()
                 )
                 // CSRF desabilitado para /users (chamada REST do app mobile)

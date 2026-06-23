@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html
+        lang="en"
+        xmlns:th="http://www.thymeleaf.org"
+        class="h-full bg-white">
+
+<head>
+    <title>Authentication Failed</title>
+    <link th:href="@{/main.css}" rel="stylesheet"/>
+</head>
+
+<body class="h-full">
+
+<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+
+        <div class="rounded-md bg-red-50 p-6 shadow">
+
+            <div class="flex items-center">
+
+                <svg
+                        class="h-8 w-8 text-red-500"
+                        viewBox="0 0 20 20"
+                        fill="currentColor">
+
+                    <path
+                            fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 011.06 0L10 8.94l1.66-1.72a.75.75 0 011.06 1.06L11.06 10l1.66 1.72a.75.75 0 11-1.06 1.06L10 11.06l-1.66 1.72a.75.75 0 11-1.06-1.06L8.94 10 7.28 8.28a.75.75 0 010-1.06z"
+                            clip-rule="evenodd"/>
+                </svg>
+
+                <h1 class="ml-3 text-xl font-bold text-red-800">
+                    Authentication Failed
+                </h1>
+
+            </div>
+
+            <p class="mt-4 text-sm text-red-700">
+                Invalid username or password.
+                Please verify your credentials and try again.
+            </p>
+
+            <div class="mt-6">
+
+                <a
+                        th:href="@{/login}"
+                        class="flex justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
+
+                    Back to Login
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

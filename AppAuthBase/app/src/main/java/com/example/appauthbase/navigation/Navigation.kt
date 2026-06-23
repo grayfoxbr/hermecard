@@ -1,36 +1,75 @@
 package com.example.appauthbase.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.example.appauthbase.presentation.AuthViewModel
 import com.example.appauthbase.presentation.RegisterViewModel
+import com.example.appauthbase.ui.HomeScreen
 import com.example.appauthbase.ui.LoginScreen
 import com.example.appauthbase.ui.RegisterScreen
 
 @Composable
 fun MainNavigation(
 
-  authViewModel:
-  AuthViewModel,
+  authViewModel: AuthViewModel,
 
-  registerViewModel:
-  RegisterViewModel,
+  registerViewModel: RegisterViewModel,
 
-  onLoginClick:
-    () -> Unit
+  onLoginClick: () -> Unit
+
 ) {
+
+  val uiState by
+  authViewModel
+    .uiState
+    .collectAsState()
 
   val backStack =
     rememberNavBackStack(Login)
 
+  LaunchedEffect(
+    uiState.isLoggedIn
+  ) {
+
+    if (
+      uiState.isLoggedIn &&
+      backStack.lastOrNull() != Home
+    ) {
+
+      backStack.clear()
+
+      backStack.add(
+        Home
+      )
+    }
+
+    if (
+      !uiState.isLoggedIn &&
+      backStack.lastOrNull() == Home
+    ) {
+
+      backStack.clear()
+
+      backStack.add(
+        Login
+      )
+    }
+  }
+
   NavDisplay(
 
-    backStack = backStack,
+    backStack =
+      backStack,
 
     onBack = {
-      backStack.removeLastOrNull()
+
+      backStack
+        .removeLastOrNull()
     },
 
     entryProvider =
@@ -49,9 +88,10 @@ fun MainNavigation(
 
             onRegisterClick = {
 
-              backStack.add(
-                Register
-              )
+              backStack
+                .add(
+                  Register
+                )
             }
           )
         }
@@ -67,6 +107,22 @@ fun MainNavigation(
 
               backStack
                 .removeLastOrNull()
+            }
+          )
+        }
+
+        entry<Home> {
+
+          HomeScreen(
+
+            accessToken =
+              uiState
+                .accessToken,
+
+            onLogout = {
+
+              authViewModel
+                .logout()
             }
           )
         }
